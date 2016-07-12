@@ -8,10 +8,11 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container">
+    <div class="container" style="margin-top: 30px;">
         <div class="card" >
+
             <div class="card-header">
-                <h2>Screen 2
+                <h2>
                     <small>The format of input file: "siteid","First Name","Last Name","Title","Company","Location","Web Site"</small>
                 </h2>
 
@@ -46,6 +47,7 @@
             </div>
 
             <form name="downloadForm" class="downloadForm" method="post" action="{% url 'download-zip' %}">
+                <input type="hidden" class="filename" name="filename">
             </form>
         </div>
     </div>
@@ -99,6 +101,7 @@
                     $(".btn-submit").removeAttr("disabled")
                     $("#progress-bar").hide()
                     // start download
+                    $(".filename").val(data.result.filename)
                     $(".downloadForm").submit()
                 }
             });
@@ -106,6 +109,7 @@
             $(".left-menu").each(function(){
                 $(this).removeClass("active")
             })
+
             $(".bulk-search").addClass("active")
         })
 

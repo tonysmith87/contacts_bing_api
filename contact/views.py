@@ -9,8 +9,7 @@ from Contacts import settings
 import random, string, os
 
 import time
-
-import zipfile
+import json
 import StringIO
 import shutil
 import datetime
@@ -88,6 +87,7 @@ def get_data(request):
     data = dict()
 
     # get data from user
+    data['siteid'] = getValue(request.GET, 'siteid')
     data['name'] = getValue(request.GET, 'name')
     data['title'] = getValue(request.GET, 'title')
     data['company'] = getValue(request.GET, 'company')
@@ -96,62 +96,55 @@ def get_data(request):
 
     lines = _getData(data)
 
-    shutil.rmtree(settings.STATIC_ROOT + '/data/')
-
     # create csv file in static/data/
     #if folder does not exist, create it
-    if not os.path.exists(settings.STATIC_ROOT + '/data/'):
-        os.makedirs(settings.STATIC_ROOT + '/data/')
+    filename = "data_%s.csv" % random_word(10)
+    if not os.path.exists(os.path.join(settings.BASE_DIR, 'contact/static/data')):
+        os.makedirs(os.path.join(settings.BASE_DIR, 'contact/static/data'))
 
     # open file
-    filepath = settings.STATIC_ROOT + '/data/' + "data_" + random_word(10) + ".csv"
+    filepath = "%s/%s" % (os.path.join(settings.BASE_DIR, 'contact/static/data'), filename)
     fp = open(filepath, "wb")
 
     title = '"Input Siteid","Input Company","Input Title","Input Location","First Name","Last Name","Title",' + \
-            '"Company","Location","Industry","linkedinurl","Current Company","Education","Date",' + \
+            '"Company","Location","Location Full","Industry","linkedinurl","Current Company","Education","Date",' + \
             '"Score","Location_Match","Company_Match","Description"\n'
     fp.write(title)
 
     fp.write(''.join(lines))
     # print(res)
 
-    return HttpResponse("")
+    return HttpResponse(filename)
 
 @login_required()
 @csrf_exempt
 def getfiles(request):
     # Files (local path) to put in the .zip
     # FIXME: Change this (get paths from DB etc)
-    path = settings.STATIC_ROOT + "/data/"
-    filenames = get_filepaths(path)
+    if 'filename' in request.POST:
+        filename = request.POST['filename']
+    else:
+        redirect("/login")
 
-    # Folder name in ZIP archive which contains the above files
-    # E.g [thearchive.zip]/somefiles/file2.txt
-    # FIXME: Set this to something better
-    zip_subdir = "result"
-    zip_filename = "%s.zip" % zip_subdir
+    path = os.path.join(settings.BASE_DIR, 'contact/static/data/' + filename)
 
     # Open StringIO to grab in-memory ZIP contents
     s = StringIO.StringIO()
 
-    # The zip compressor
-    zf = zipfile.ZipFile(s, "w")
-
-    for fpath in filenames:
-        # Calculate path for file in zip
-        fdir, fname = os.path.split(fpath)
-        zip_path = os.path.join(zip_subdir, fname)
-
-        # Add file, at correct path
-        zf.write(fpath, zip_path)
-
-    # Must close zip for all contents to be written
-    zf.close()
+    with open(path, "r") as fp:
+        s.write(fp.read())
 
     # Grab ZIP file from in-memory, make response with correct MIME-type
-    resp = HttpResponse(s.getvalue(), content_type="application/x-zip-compressed")
+    resp = HttpResponse(s.getvalue(), content_type="text/csv")
     # ..and correct content-disposition
-    resp['Content-Disposition'] = 'attachment; filename=%s' % zip_filename
+    if 'bulkinput' in filename:
+        temp = "Bulk_Contact_Search_%s.csv" % datetime.datetime.now().strftime('%d%m%Y')
+    else:
+        temp = "Company_%s.csv" % datetime.datetime.now().strftime('%d%m%Y')
+    resp['Content-Disposition'] = "attachment; filename=" + temp
+
+    if not os.path.exists(os.path.join(settings.BASE_DIR, 'contact/static/data/' + filename)):
+        os.remove(os.path.join(settings.BASE_DIR, 'contact/static/data/' + filename))
 
     return resp
 
@@ -163,57 +156,41 @@ def uploadfile(request):
         # get file from user
         uploaded_file = request.FILES['files[]']
 
-        shutil.rmtree(settings.STATIC_ROOT + '/data/')
-
-        # create csv file in static/data/
-        #if folder does not exist, create it
-        if not os.path.exists(settings.STATIC_ROOT + '/data/'):
-            os.makedirs(settings.STATIC_ROOT + '/data/')
+        filename = "bulkinput_%s.csv" % random_word(10)
+        if not os.path.exists(os.path.join(settings.BASE_DIR, 'contact/static/data')):
+            os.makedirs(os.path.join(settings.BASE_DIR, 'contact/static/data'))
 
         # open file
-        filepath = settings.STATIC_ROOT + '/data/' + "data_" + random_word(10) + ".csv"
+        filepath = "%s/%s" % (os.path.join(settings.BASE_DIR, 'contact/static/data'), filename)
         fp = open(filepath, "wb")
 
         title = '"Input Siteid","Input Company","Input Title","Input Location","First Name","Last Name","Title",' + \
-            '"Company","Location","Industry","linkedinurl","Current Company","Education","Date",' + \
+            '"Company","Location","Location Full","Industry","linkedinurl","Current Company","Education","Date",' + \
             '"Score","Location_Match","Company_Match","Description"\n'
         fp.write(title)
 
         res = ""
         for chunk in uploaded_file.chunks():
             tokens = chunk.split("\n")
-            if len(tokens) > 1:
-                for token in tokens[1:]:
-                    data = dict()
-                    token = token.replace("\r", "")
-                    temp = token.split(",")
-                    if len(temp) > 6:
-                        # get data from file
-                        data['name'] = temp[1].replace("\"", "") + " " + temp[2].replace("\"", "")
-                        data['name'] = data['name'].strip()
-                        data['title'] = temp[3].replace("\"", "")
-                        data['company'] = temp[4].replace("\"", "")
-                        data['location'] = temp[5].replace("\"", "")
-                        data['site'] = temp[6].replace("\"", "")
+            for token in tokens:
+                data = dict()
+                token = token.replace("\r", "")
+                temp = token.split(",")
+                if len(temp) > 6:
+                    # get data from file
+                    data['siteid'] = temp[0]
+                    data['name'] = temp[1].replace("\"", "") + " " + temp[2].replace("\"", "")
+                    data['name'] = data['name'].strip()
+                    data['title'] = temp[3].replace("\"", "")
+                    data['company'] = temp[4].replace("\"", "")
+                    data['location'] = temp[5].replace("\"", "")
+                    data['site'] = temp[6].replace("\"", "")
 
-                        lines = _getData(data)
-                        fp.write("".join(lines))
+                    lines = _getData(data)
+                    fp.write("".join(lines))
+    res = {"filename": filename}
 
-
-    return HttpResponse("{}")
-
-def get_filepaths(directory):
-    file_paths = []  # List which will store all of the full filepaths.
-
-    # Walk the tree.
-    for root, directories, files in os.walk(directory):
-        for filename in files:
-            # Join the two strings in order to form the full filepath.
-            filepath = os.path.join(root, filename)
-            if '.html' not in filename:
-                file_paths.append(filepath)  # Add it to the list.
-
-    return file_paths  # Self-explanatory.
+    return HttpResponse(json.dumps(res))
 
 
 def random_word(length):
@@ -294,10 +271,12 @@ def _getData(data, name=1):
             industry_str = ps_ind[1].strip()
 
         # get score of location
-        score_location = "No"
+        full_location = res_location
         res_location = res_location.replace("Area", "")
         res_location = res_location.replace("Industry", "")
         res_location = res_location.replace("Greater", "").strip()
+
+        score_location = "No"
         if res_location != "" and (res_location == data['location'] or res_location in data['location'] or data['location'] in res_location):
             score_location = "Yes"
 
@@ -325,9 +304,9 @@ def _getData(data, name=1):
         date = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
 
         if data['name'] == "" or (data['name'] != "" and data['name'] == "%s %s" % (first_name, last_name)):
-            line = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%d","%s","%s","%s"\n' % \
-                   (item.id, data['company'], data['title'], data['location'], first_name, last_name, item.title, \
-                    res_company, res_location, industry_str, item.url, curr_com, education, date, \
+            line = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%d","%s","%s","%s"\n' % \
+                   (data['siteid'], data['company'], data['title'], data['location'], first_name, last_name, item.title, \
+                    res_company, res_location, full_location, industry_str, item.url, curr_com, education, date, \
                     score, score_location, score_company, description)
 
             line = line.encode("utf8")
@@ -377,7 +356,8 @@ def parse_str(str, key=" at "):
                     if "Current:" in str_list[i].strip():
                         res[0] = ""
 
-                return res
+
+                return [res[0].split("Location")[-1], res[1]]
             else:
                 return ["", res[0]]
 

@@ -40,12 +40,6 @@
 
             <li class="pull-right">
                 <ul class="top-menu">
-                    <li id="toggle-width">
-                        <div class="toggle-switch">
-                            <input id="tw-switch" type="checkbox" hidden="hidden">
-                            <label for="tw-switch" class="ts-helper"></label>
-                        </div>
-                    </li>
                     <li style="margin-right: 20px;">
                          <a href="{% url 'logout' %}">Log out</a>
                     </li>
@@ -61,18 +55,14 @@
                 <input type="text">
             </div>
         </div>
+
+        <ul class="tab-nav tn-justified" style="margin-right: 80%; margin-top: 40px; background-color: white">
+            <li class="active waves-effect left-menu search"><a href="{% url 'search' %}">Single Input</a></li>
+            <li class="waves-effect left-menu bulk-search"><a href="{% url 'bulk-search' %}">Bulk Upload</a></li>
+        </ul>
     </header>
     <section id="main" data-layout="layout-1">
-        <aside id="sidebar" class="sidebar c-overflow">
-            <ul class="main-menu">
-                <li class="search left-menu active">
-                    <a href="{% url 'search' %}"><i class="zmdi zmdi-home"></i> Screen 1</a>
-                </li>
-                <li class="left-menu bulk-search">
-                    <a href="{% url 'bulk-search' %}"><i class="zmdi zmdi-home"></i> Screen 2</a>
-                </li>
-            </ul>
-        </aside>
+
         <section id="content">
         {% block content %}{% endblock %}
         </section>
