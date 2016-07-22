@@ -13,7 +13,7 @@
 
             <div class="card-header">
             </div>
-            <form class="form-horizontal input_form" role="form">
+            <form class="form-horizontal input_form" role="form" name="downloadForm" method="post" action="{% url 'download-zip' %}">
 
                 <div class="card-body card-padding">
 
@@ -21,7 +21,7 @@
                         <label class="col-sm-2 control-label">siteid</label>
                         <div class="col-sm-10">
                             <div class="fg-line">
-                                <input type="input" class="form-control input-sm" id="first-name" name="siteid" placeholder="Name">
+                                <input type="input" class="form-control input-sm" id="first-name" name="siteid" placeholder="Site id">
                             </div>
                         </div>
                     </div>
@@ -30,7 +30,7 @@
                         <label class="col-sm-2 control-label">Name</label>
                         <div class="col-sm-10">
                             <div class="fg-line">
-                                <input type="input" class="form-control input-sm" id="first-name" name="name" placeholder="Site id">
+                                <input type="input" class="form-control input-sm" id="first-name" name="name" placeholder="Name">
                             </div>
                         </div>
                     </div>
@@ -72,6 +72,8 @@
                         </div>
                     </div>
                 </div>
+
+                <input type="hidden" class="filename" name="filename">
             </form>
 
             <div id="progress-bar">
@@ -91,9 +93,6 @@
                 </div>
             </div>
 
-            <form name="downloadForm" class="downloadForm" method="post" action="{% url 'download-zip' %}">
-                <input type="hidden" class="filename" name="filename">
-            </form>
         </div>
     </div>
 
@@ -140,7 +139,7 @@
 
                     // start download
                     $(".filename").val(filename)
-                    $(".downloadForm").submit()
+                    $(".input_form").submit()
                 },
                 error: function (x, e) {
                 }

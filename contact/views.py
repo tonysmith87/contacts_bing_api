@@ -11,12 +11,13 @@ import random, string, os
 import time
 import json
 import StringIO
-import shutil
+import re
 import datetime
 
 from django.http import HttpResponse
 
 from django.views.decorators.csrf import csrf_exempt
+from contact.Yahoo_Finance import *
 
 # Login Required decorator
 def login_required():
@@ -78,8 +79,12 @@ def search_contact(request):
 
 @login_required()
 def bulk_search(request):
-
     return render_to_response('contact/bulkInput.html', locals(), context_instance=RequestContext(request))
+
+
+@login_required()
+def yahoo_search(request):
+    return render_to_response('contact/yahoo_finance.html', locals(), context_instance=RequestContext(request))
 
 
 @login_required()
@@ -138,12 +143,26 @@ def getfiles(request):
     resp = HttpResponse(s.getvalue(), content_type="text/csv")
     # ..and correct content-disposition
     if 'bulkinput' in filename:
-        temp = "Bulk_Contact_Search_%s.csv" % datetime.datetime.now().strftime('%d%m%Y')
+        temp = "Bulk_Contact_Search_%s.csv" % datetime.datetime.now().strftime('%m%d%y')
+    elif 'yahooinput' in filename:
+        temp = "Yahoo_Finance_%s.csv" % datetime.datetime.now().strftime('%m%d%y')
     else:
-        temp = "Company_%s.csv" % datetime.datetime.now().strftime('%d%m%Y')
+
+        tp_filename = ' '.join([getValue(request.POST, 'name'), getValue(request.POST, 'title'), \
+                    getValue(request.POST, 'company'), getValue(request.POST, 'location')])
+
+        tp_filename = ' '.join(tp_filename.split()).strip()
+
+        if tp_filename == u"":
+            tp_filename = "Company"
+        else:
+            tp_filename = tp_filename.replace(" ", "_")
+
+        temp = "%s_%s.csv" % (tp_filename, datetime.datetime.now().strftime('%m%d%y'))
+
     resp['Content-Disposition'] = "attachment; filename=" + temp
 
-    if not os.path.exists(os.path.join(settings.BASE_DIR, 'contact/static/data/' + filename)):
+    if os.path.exists(os.path.join(settings.BASE_DIR, 'contact/static/data/' + filename)):
         os.remove(os.path.join(settings.BASE_DIR, 'contact/static/data/' + filename))
 
     return resp
@@ -192,6 +211,33 @@ def uploadfile(request):
 
     return HttpResponse(json.dumps(res))
 
+@login_required()
+@csrf_exempt
+def uploadyahoo(request):
+
+    if 'files[]' in request.FILES:
+        # get file from user
+        uploaded_file = request.FILES['files[]']
+
+        filename = "yahooinput_%s.csv" % random_word(10)
+        if not os.path.exists(os.path.join(settings.BASE_DIR, 'contact/static/data')):
+            os.makedirs(os.path.join(settings.BASE_DIR, 'contact/static/data'))
+
+
+        out_filepath = "%s/%s" % (os.path.join(settings.BASE_DIR, 'contact/static/data'), filename)
+
+        input_filepath = os.path.join(settings.BASE_DIR, 'contact/static/data/input.csv')
+
+        with open(input_filepath, "wb") as in_fp:
+            for chunk in uploaded_file.chunks():
+                in_fp.write(chunk)
+
+    yahoo_finance(input_filepath, out_filepath)
+
+    res = {"filename": filename}
+
+    return HttpResponse(json.dumps(res))
+
 
 def random_word(length):
    return ''.join(random.choice(string.lowercase + string.uppercase + string.digits) for i in range(length))
@@ -226,7 +272,6 @@ def _getData(data, name=1):
     bing_web = PyBingWebSearch(settings.BING_API_KEY, search_term.strip())
     result = bing_web.search_all(limit=100, format='json') #1-50
 
-
     name_tp = data['name'].split(" ")
     first_name = name_tp[0]
     last_name = ""
@@ -241,6 +286,7 @@ def _getData(data, name=1):
         '''title_tp = item.title
         if title != u"":
             title_tp = title'''
+
         description = item.description.replace(",", " ")
         description = description.replace("\"", " ")
 

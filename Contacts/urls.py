@@ -23,9 +23,11 @@ urlpatterns = [
 
     url(r'^search/$', views.search_contact, name="search"),
     url(r'^bulk-search/$', views.bulk_search, name="bulk-search"),
+    url(r'^yahoo-search/$', views.yahoo_search, name="yahoo-search"),
     url(r'^get-data/$', views.get_data, name="get-data"),
 
     url(r'^download-zip/$', views.getfiles, name="download-zip"),
 
-    url(r'^upload-file/$', views.uploadfile, name="upload-file")
+    url(r'^upload-file/$', views.uploadfile, name="upload-file"),
+    url(r'^upload-yahoo/$', views.uploadyahoo, name="upload-yahoo")
 ]
