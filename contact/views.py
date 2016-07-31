@@ -21,7 +21,7 @@ from django.views.decorators.csrf import csrf_exempt
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 
-from yahoo.spiders.yahoo_spider import YahooSpider
+from contact.yahoo.spiders.yahoo_spider import YahooSpider
 import csv 
 
 # Login Required decorator
