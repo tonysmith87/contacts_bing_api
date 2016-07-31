@@ -252,7 +252,7 @@ def yahoo_finance(input_file, output_file):
         for row in reader:
             append_sht(row)	
 
-    os.environ.setdefault("SCRAPY_SETTINGS_MODULE","yahoo.settings.py")
+    os.environ.setdefault("SCRAPY_SETTINGS_MODULE","contact.yahoo.settings.py")
     crawler = CrawlerProcess(get_project_settings())
     crawler.crawl(YahooSpider, input_data=sheet[1:], output_file=output_file)
     crawler.start()
