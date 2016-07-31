@@ -15,6 +15,7 @@ class YahooSpider(scrapy.Spider):
 	handle_httpstatus_list = [553, 404, 400, 500]
 	
 	def __init__(self, input_data, output_file):
+		print "start_spider"
 		self.input_data = input_data
 		
 		# initial data
