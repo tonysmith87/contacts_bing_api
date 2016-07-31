@@ -249,9 +249,10 @@ class YahooSpider(scrapy.Spider):
 				temp = self.remove_char(data['statistics'], key)
 			else:
 				try:
-					self.remove_char(data['statistics'][key], 'fmt')
+					temp = self.remove_char(data['statistics'][key], 'fmt')
 				except:
-					tp_offer.append("N/A")
+					temp = "N/A"
+				
 				
 				
 			suffix.append(temp)
