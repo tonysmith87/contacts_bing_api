@@ -5,6 +5,8 @@ from datetime import datetime
 from pytz import timezone
 from collections import OrderedDict
 
+import time
+
 class YahooSpider(scrapy.Spider):
 	name = "yahoo"
 	allowed_domains = ["finance.yahoo.com"]
@@ -77,10 +79,10 @@ class YahooSpider(scrapy.Spider):
 		# site error handling
 		if response.status in [553, 400, 404, 500]:
 			# make a request to parse profile information.
-			request = scrapy.Request(response.url, callback=self.parse_profile, dont_filter=True)
+			request = scrapy.Request(response.url, callback=self.parse_profile)
 			request.meta['item'] = response.meta['item']
 			yield request
-			return
+			return 
 	
 		yahoo_finance = dict()
 		item = response.meta['item']
@@ -100,6 +102,9 @@ class YahooSpider(scrapy.Spider):
 		yahoo_finance["Time Stamp"] = datetime.now(tz).strftime("%a, %b %d, %Y, %I:%M%p") + " EDT"
 		
 		data = json.loads(response.body)
+
+		if data['quoteSummary']['result'] == None:
+			return
 		tp_profile = data['quoteSummary']['result'][0]['assetProfile']
 		
 		# get company profile
