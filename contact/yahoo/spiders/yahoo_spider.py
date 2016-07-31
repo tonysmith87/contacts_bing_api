@@ -148,10 +148,7 @@ class YahooSpider(scrapy.Spider):
 	def parse_statistics(self, response):
 		# site error handling
 		if response.status in [553, 400, 404, 500]:
-			# make a request to parse profile information.
-			request = scrapy.Request(response.url, callback=self.parse_profile)
-			request.meta['item'] = response.meta['item']
-			yield request
+			
 			return
 	
 		yahoo_finance = response.meta['yahoo_finance']
