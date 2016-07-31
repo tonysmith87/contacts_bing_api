@@ -117,8 +117,15 @@ class YahooSpider(scrapy.Spider):
 			tp_offer.append(self.check_value(offer, 'name'))
 			tp_offer.append(self.check_value(offer, 'age'))
 			tp_offer.append(self.check_value(offer, 'title'))
-			tp_offer.append(self.check_value(offer['totalPay'], 'fmt'))
-			tp_offer.append(self.check_value(offer['exercisedValue'], 'fmt'))
+			try:
+				tp_offer.append(self.check_value(offer['totalPay'], 'fmt'))
+			except:
+				tp_offer.append("N/A")
+
+			try:
+				tp_offer.append(self.check_value(offer['exercisedValue'], 'fmt'))
+			except:
+				tp_offer.append("N/A")
 			
 			tp_offers.append(tp_offer)
 			
@@ -241,7 +248,10 @@ class YahooSpider(scrapy.Spider):
 			elif key == "lastSplitFactor":
 				temp = self.remove_char(data['statistics'], key)
 			else:
-				temp = self.remove_char(data['statistics'][key], 'fmt')
+				try:
+					self.remove_char(data['statistics'][key], 'fmt')
+				except:
+					tp_offer.append("N/A")
 				
 				
 			suffix.append(temp)
