@@ -58,7 +58,8 @@ class YahooSpider(scrapy.Spider):
                       'Ex-Dividend Date4', 'Last Split Factor (new per old)2',
                       'Last Split Date3']
 		self.out_fp.write(','.join(self.header)+"\n")
-
+		
+	def start_requests(self):
 		for item in self.input_data:
 		
 			# if input item is invalid, skip this item
@@ -70,9 +71,6 @@ class YahooSpider(scrapy.Spider):
 			request = scrapy.Request(url, callback=self.parse_profile)
 			request.meta['item'] = item
 			yield request
-		
-	# def start_requests(self):
-		
 			
 	# parse profile information and make a request for parse statistics data
 	def parse_profile(self, response):
