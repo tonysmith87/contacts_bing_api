@@ -11,8 +11,8 @@
 
 BOT_NAME = 'yahoo'
 
-SPIDER_MODULES = ['yahoo.spiders']
-NEWSPIDER_MODULE = 'yahoo.spiders'
+SPIDER_MODULES = ['contact.yahoo.spiders']
+NEWSPIDER_MODULE = 'contact.yahoo.spiders'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
