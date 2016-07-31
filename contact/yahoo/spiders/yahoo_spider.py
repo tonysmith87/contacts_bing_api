@@ -128,15 +128,16 @@ class YahooSpider(scrapy.Spider):
 		url = self.search_url.replace("Street_Ticker", yahoo_finance['Street_Ticker'])
 		request = scrapy.Request(url, callback=self.parse_statistics)
 		request.meta['yahoo_finance'] = yahoo_finance
+		request.meta['item'] = response.meta['item']
 		yield request
 	
 	# parse statistics data and save all data into csv file
 	def parse_statistics(self, response):
 		# site error handling
 		if response.status in [553, 400, 404, 500]:
-		
-			request = scrapy.Request(response.url, callback=self.parse_statistics, dont_filter=True)
-			request.meta['yahoo_finance'] = response.meta['yahoo_finance']
+			# make a request to parse profile information.
+			request = scrapy.Request(response.url, callback=self.parse_profile, dont_filter=True)
+			request.meta['item'] = response.meta['item']
 			yield request
 			return
 	
@@ -167,16 +168,16 @@ class YahooSpider(scrapy.Spider):
 		url = self.statistics_url[0] + yahoo_finance['Street_Ticker'] + self.statistics_url[1]
 		request = scrapy.Request(url, callback=self.parse_detail_statistics)
 		request.meta['yahoo_finance'] = yahoo_finance
-		
+		request.meta['item'] = response.meta['item']
 		yield request
 			
 	# parse statistics data and save all data into csv file
 	def parse_detail_statistics(self, response):
 		# site error handling
 		if response.status in [553, 400, 404, 500]:
-		
-			request = scrapy.Request(response.url, callback=self.parse_detail_statistics, dont_filter=True)
-			request.meta['yahoo_finance'] = response.meta['yahoo_finance']
+			# make a request to parse profile information.
+			request = scrapy.Request(response.url, callback=self.parse_profile, dont_filter=True)
+			request.meta['item'] = response.meta['item']
 			yield request
 			return
 	
@@ -225,12 +226,18 @@ class YahooSpider(scrapy.Spider):
 		suffix = []
 		for key in statistics_keys:
 			if key == 'start_date':
-				temp = self.remove_char(data['statistics']['earningsDate'][0], 'fmt')
+				if len(data['statistics']['earningsDate']) > 0:
+					temp = self.remove_char(data['statistics']['earningsDate'][0], 'fmt')
+				else:
+					temp = "N/A"
 			elif key == 'end_date':
 				try:
 					temp = self.remove_char(data['statistics']['earningsDate'][1], 'fmt')
 				except:
-					temp = self.remove_char(data['statistics']['earningsDate'][0], 'fmt')
+					if len(data['statistics']['earningsDate']) > 0:
+						temp = self.remove_char(data['statistics']['earningsDate'][0], 'fmt')
+					else:
+						temp = "N/A"
 			elif key == "lastSplitFactor":
 				temp = self.remove_char(data['statistics'], key)
 			else:
