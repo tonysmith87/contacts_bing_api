@@ -18,7 +18,7 @@ from django.http import HttpResponse
 
 from django.views.decorators.csrf import csrf_exempt
 
-from scrapy.crawler import CrawlerProcess
+from scrapy.crawler import CrawlerRunner
 from scrapy.utils.project import get_project_settings
 
 from contact.yahoo.spiders.yahoo_spider import YahooSpider
@@ -256,7 +256,7 @@ def yahoo_finance(input_file, output_file):
     crawler_settings = get_project_settings()
     crawler = CrawlerRunner(crawler_settings)
     crawler.crawl(YahooSpider, input_data=sheet[1:], output_file=output_file)
-
+    crawler.start()
 
 def random_word(length):
    return ''.join(random.choice(string.lowercase + string.uppercase + string.digits) for i in range(length))
