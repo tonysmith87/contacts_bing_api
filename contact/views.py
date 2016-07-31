@@ -258,8 +258,7 @@ def yahoo_finance(input_file, output_file):
     crawler_settings = get_project_settings()
     crawler = CrawlerRunner(crawler_settings)
     d = crawler.crawl(YahooSpider, input_data=sheet[1:], output_file=output_file)
-    d.addBoth(lambda _: reactor.stop())
-    reactor.run() # the script will block here until the crawling is finished
+    d.run()
 
 def random_word(length):
    return ''.join(random.choice(string.lowercase + string.uppercase + string.digits) for i in range(length))
