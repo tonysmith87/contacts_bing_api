@@ -227,7 +227,10 @@ class YahooSpider(scrapy.Spider):
 			if key == 'start_date':
 				temp = self.remove_char(data['statistics']['earningsDate'][0], 'fmt')
 			elif key == 'end_date':
-				temp = self.remove_char(data['statistics']['earningsDate'][1], 'fmt')
+				try:
+					temp = self.remove_char(data['statistics']['earningsDate'][1], 'fmt')
+				except:
+					temp = self.remove_char(data['statistics']['earningsDate'][0], 'fmt')
 			elif key == "lastSplitFactor":
 				temp = self.remove_char(data['statistics'], key)
 			else:
