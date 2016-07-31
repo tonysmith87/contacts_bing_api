@@ -57,6 +57,7 @@ class YahooSpider(scrapy.Spider):
                       'Ex-Dividend Date4', 'Last Split Factor (new per old)2',
                       'Last Split Date3']
 		self.out_fp.write(','.join(self.header)+"\n")
+		self.download_delay = 1
 		
 	def start_requests(self):
 		for item in self.input_data:
@@ -287,12 +288,15 @@ class YahooSpider(scrapy.Spider):
 			return "N/A"
 			
 	def remove_char(self, dict, key=""):
-		if key == "":
-			value = dict
-		elif key in dict:
-			value = str(dict[key])
+		try:
+			if key == "":
+				value = dict
+			elif key in dict:
+				value = str(dict[key])
 			
-		else:
+			else:
+				value = "N/A"
+		except:
 			value = "N/A"
 		
 		value = value.replace(",", " ")
