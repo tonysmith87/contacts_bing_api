@@ -149,7 +149,7 @@ class YahooSpider(scrapy.Spider):
 		# site error handling
 		if response.status in [553, 400, 404, 500]:
 			# make a request to parse profile information.
-			request = scrapy.Request(response.url, callback=self.parse_profile, dont_filter=True)
+			request = scrapy.Request(response.url, callback=self.parse_profile)
 			request.meta['item'] = response.meta['item']
 			yield request
 			return
@@ -189,7 +189,7 @@ class YahooSpider(scrapy.Spider):
 		# site error handling
 		if response.status in [553, 400, 404, 500]:
 			# make a request to parse profile information.
-			request = scrapy.Request(response.url, callback=self.parse_profile, dont_filter=True)
+			request = scrapy.Request(response.url, callback=self.parse_profile)
 			request.meta['item'] = response.meta['item']
 			yield request
 			return
