@@ -18,13 +18,7 @@ from django.http import HttpResponse
 
 from django.views.decorators.csrf import csrf_exempt
 
-from scrapy.crawler import CrawlerRunner
-from scrapy.utils.project import get_project_settings
-
-from contact.yahoo.spiders.yahoo_spider import YahooSpider
-import csv 
-
-from twisted.internet import reactor
+import os
 
 # Login Required decorator
 def login_required():
@@ -239,25 +233,12 @@ def uploadyahoo(request):
             for chunk in uploaded_file.chunks():
                 in_fp.write(chunk)
 
-    yahoo_finance(input_filepath, out_filepath)
+    os.system("python contact/Yahoo_Finance.py %s %s" % (input_filepath, out_filepath))
+    # yahoo_finance(input_filepath, out_filepath)
 
     res = {"filename": filename}
 
     return HttpResponse(json.dumps(res))
-
-def yahoo_finance(input_file, output_file):
-    with open(input_file, 'r') as rfile:
-        reader = csv.reader(rfile, delimiter=",")
-
-        sheet = []
-        append_sht = sheet.append
-        for row in reader:
-            append_sht(row)	
-
-    os.environ.setdefault("SCRAPY_SETTINGS_MODULE","contact.yahoo.settings")
-    crawler_settings = get_project_settings()
-    crawler = CrawlerRunner(crawler_settings)
-    yield crawler.crawl(YahooSpider, input_data=sheet[1:], output_file=output_file)
 
 def random_word(length):
    return ''.join(random.choice(string.lowercase + string.uppercase + string.digits) for i in range(length))

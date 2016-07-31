@@ -3,6 +3,7 @@ from scrapy.utils.project import get_project_settings
 
 from yahoo.spiders.yahoo_spider import YahooSpider
 import csv 
+import sys
 
 def yahoo_finance(input_file, output_file):
 	with open(input_file, 'r') as rfile:
@@ -18,4 +19,7 @@ def yahoo_finance(input_file, output_file):
 	crawler.start()
 
 if __name__ == '__main__':
-	yahoo_finance('YF_input_test.csv', "out.csv")
+	
+	input_file = sys.argv[1]
+	output_file = sys.argv[2]
+	yahoo_finance(input_file, output_file)
