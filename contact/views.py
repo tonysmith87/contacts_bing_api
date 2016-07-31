@@ -253,9 +253,9 @@ def yahoo_finance(input_file, output_file):
             append_sht(row)	
 
     os.environ.setdefault("SCRAPY_SETTINGS_MODULE","contact.yahoo.settings")
-    crawler = CrawlerProcess(get_project_settings())
+    crawler_settings = get_project_settings()
+    crawler = CrawlerRunner(crawler_settings)
     crawler.crawl(YahooSpider, input_data=sheet[1:], output_file=output_file)
-    crawler.start()
 
 
 def random_word(length):
