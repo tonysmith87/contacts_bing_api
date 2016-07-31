@@ -24,6 +24,8 @@ from scrapy.utils.project import get_project_settings
 from contact.yahoo.spiders.yahoo_spider import YahooSpider
 import csv 
 
+from twisted.internet import reactor
+
 # Login Required decorator
 def login_required():
     def login_decorator(function):
@@ -255,8 +257,9 @@ def yahoo_finance(input_file, output_file):
     os.environ.setdefault("SCRAPY_SETTINGS_MODULE","contact.yahoo.settings")
     crawler_settings = get_project_settings()
     crawler = CrawlerRunner(crawler_settings)
-    crawler.crawl(YahooSpider, input_data=sheet[1:], output_file=output_file)
-    crawler.start()
+    d = crawler.crawl(YahooSpider, input_data=sheet[1:], output_file=output_file)
+    d.addBoth(lambda _: reactor.stop())
+    reactor.run() # the script will block here until the crawling is finished
 
 def random_word(length):
    return ''.join(random.choice(string.lowercase + string.uppercase + string.digits) for i in range(length))
