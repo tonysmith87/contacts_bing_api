@@ -59,7 +59,6 @@ class YahooSpider(scrapy.Spider):
                       'Ex-Dividend Date4', 'Last Split Factor (new per old)2',
                       'Last Split Date3']
 		self.out_fp.write(','.join(self.header)+"\n")
-		self.download_delay = 1
 		
 	def start_requests(self):
 		for item in self.input_data:
@@ -78,10 +77,6 @@ class YahooSpider(scrapy.Spider):
 	def parse_profile(self, response):
 		# site error handling
 		if response.status in [553, 400, 404, 500]:
-			# make a request to parse profile information.
-			request = scrapy.Request(response.url, callback=self.parse_profile)
-			request.meta['item'] = response.meta['item']
-			yield request
 			return 
 	
 		yahoo_finance = dict()
@@ -148,7 +143,10 @@ class YahooSpider(scrapy.Spider):
 	def parse_statistics(self, response):
 		# site error handling
 		if response.status in [553, 400, 404, 500]:
-			
+			# make a request to parse profile information.
+			request = scrapy.Request(response.url, callback=self.parse_profile)
+			request.meta['item'] = response.meta['item']
+			yield request
 			return
 	
 		yahoo_finance = response.meta['yahoo_finance']
@@ -185,10 +183,6 @@ class YahooSpider(scrapy.Spider):
 	def parse_detail_statistics(self, response):
 		# site error handling
 		if response.status in [553, 400, 404, 500]:
-			# make a request to parse profile information.
-			request = scrapy.Request(response.url, callback=self.parse_profile)
-			request.meta['item'] = response.meta['item']
-			yield request
 			return
 	
 		yahoo_finance = response.meta['yahoo_finance']
@@ -263,7 +257,7 @@ class YahooSpider(scrapy.Spider):
 		suffix = ','.join(suffix)
 		
 		for offer in data['offers']:
-			offer = [self.remove_char(str(item)) for item in offer]
+			offer = [self.remove_char(item) for item in offer]
 			line = "%s,%s,%s\n" % (prefix, ','.join(offer), suffix)
 			
 			self.out_fp.write(line.encode("utf8"))
@@ -290,9 +284,13 @@ class YahooSpider(scrapy.Spider):
 			return "N/A"
 			
 	def remove_char(self, dict, key=""):
+
 		try:
 			if key == "":
-				value = dict
+				try:
+					value = str(dict)
+				except:
+					value = dict
 			elif key in dict:
 				value = str(dict[key])
 			
