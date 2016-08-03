@@ -94,7 +94,7 @@ class YahooSpider(scrapy.Spider):
 		# get time stamp
 		tz = timezone('EST')
 		datetime.now(tz) 
-		yahoo_finance["Time Stamp"] = datetime.now(tz).strftime("%a, %b %d, %Y, %I:%M%p") + " EDT"
+		yahoo_finance["Time Stamp"] = datetime.now(tz).strftime("%m/%d/%Y") + " EDT"
 		
 		data = json.loads(response.body)
 
@@ -155,6 +155,9 @@ class YahooSpider(scrapy.Spider):
 		statistics = OrderedDict()
 			
 		yahoo_finance['Company'] = self.validate(response.xpath("//div[@id='quote-header-info']//h6/text()"))
+		if yahoo_finance['Company'] == "N/A":
+			yahoo_finance['Company'] = self.validate(response.xpath("//div[@id='quote-header-info']//h1/text()"))
+
 		yahoo_finance['en_date'] = self.validate(response.xpath("//div[@id='quote-header-info']//p[1]//span[4]//span[2]/text()")).split(",")[0]
 		
 		try:
@@ -213,6 +216,11 @@ class YahooSpider(scrapy.Spider):
 	def save_data_csv(self, data):
 		prefix = []
 		for key in self.header[:16]:
+			if key == "Duns":
+				try:
+					data["Duns"] = data["Duns"].rjust(10, '0')
+				except:
+					pass
 			prefix.append(self.remove_char(data, key))
 		prefix = ','.join(prefix)
 			
@@ -249,6 +257,10 @@ class YahooSpider(scrapy.Spider):
 					temp = self.remove_char(data['statistics'][key], 'fmt')
 				except:
 					temp = "N/A"
+
+			if "date" in key and len(temp.split("-")) > 2:
+				date_list = temp.split("-")
+				temp = "%s/%s/%s" % (date_list[1], date_list[2], date_list[0])
 				
 				
 				
