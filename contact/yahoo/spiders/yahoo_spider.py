@@ -94,7 +94,7 @@ class YahooSpider(scrapy.Spider):
 		# get time stamp
 		tz = timezone('EST')
 		datetime.now(tz) 
-		yahoo_finance["Time Stamp"] = datetime.now(tz).strftime("%m/%d/%Y") + " EDT"
+		yahoo_finance["Time Stamp"] = datetime.now(tz).strftime("%m/%d/%Y")	
 		
 		data = json.loads(response.body)
 
@@ -221,6 +221,10 @@ class YahooSpider(scrapy.Spider):
 					data["Duns"] = data["Duns"].rjust(10, '0')
 				except:
 					pass
+
+			if key == "Company" and data[key] == "N/A":
+				return
+
 			prefix.append(self.remove_char(data, key))
 		prefix = ','.join(prefix)
 			
@@ -258,7 +262,8 @@ class YahooSpider(scrapy.Spider):
 				except:
 					temp = "N/A"
 
-			if "date" in key and len(temp.split("-")) > 2:
+			date_keys = ["start_date", "end_date", "lastFiscalYearEnd", "mostRecentQuarter", "dividendDate", "exDividendDate", "lastSplitDate"]
+			if key in date_keys and temp != "N/A":
 				date_list = temp.split("-")
 				temp = "%s/%s/%s" % (date_list[1], date_list[2], date_list[0])
 				
