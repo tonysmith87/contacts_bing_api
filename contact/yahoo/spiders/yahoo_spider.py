@@ -5,6 +5,8 @@ from datetime import datetime
 from pytz import timezone
 from collections import OrderedDict
 
+import time
+
 class YahooSpider(scrapy.Spider):
 	name = "yahoo"
 	allowed_domains = ["finance.yahoo.com"]
@@ -75,11 +77,7 @@ class YahooSpider(scrapy.Spider):
 	def parse_profile(self, response):
 		# site error handling
 		if response.status in [553, 400, 404, 500]:
-			# make a request to parse profile information.
-			request = scrapy.Request(response.url, callback=self.parse_profile, dont_filter=True)
-			request.meta['item'] = response.meta['item']
-			yield request
-			return
+			return 
 	
 		yahoo_finance = dict()
 		item = response.meta['item']
@@ -99,6 +97,9 @@ class YahooSpider(scrapy.Spider):
 		yahoo_finance["Time Stamp"] = datetime.now(tz).strftime("%a, %b %d, %Y, %I:%M%p") + " EDT"
 		
 		data = json.loads(response.body)
+
+		if data['quoteSummary']['result'] == None:
+			return
 		tp_profile = data['quoteSummary']['result'][0]['assetProfile']
 		
 		# get company profile
@@ -117,8 +118,15 @@ class YahooSpider(scrapy.Spider):
 			tp_offer.append(self.check_value(offer, 'name'))
 			tp_offer.append(self.check_value(offer, 'age'))
 			tp_offer.append(self.check_value(offer, 'title'))
-			tp_offer.append(self.check_value(offer['totalPay'], 'fmt'))
-			tp_offer.append(self.check_value(offer['exercisedValue'], 'fmt'))
+			try:
+				tp_offer.append(self.check_value(offer['totalPay'], 'fmt'))
+			except:
+				tp_offer.append("N/A")
+
+			try:
+				tp_offer.append(self.check_value(offer['exercisedValue'], 'fmt'))
+			except:
+				tp_offer.append("N/A")
 			
 			tp_offers.append(tp_offer)
 			
@@ -128,15 +136,16 @@ class YahooSpider(scrapy.Spider):
 		url = self.search_url.replace("Street_Ticker", yahoo_finance['Street_Ticker'])
 		request = scrapy.Request(url, callback=self.parse_statistics)
 		request.meta['yahoo_finance'] = yahoo_finance
+		request.meta['item'] = response.meta['item']
 		yield request
 	
 	# parse statistics data and save all data into csv file
 	def parse_statistics(self, response):
 		# site error handling
 		if response.status in [553, 400, 404, 500]:
-		
-			request = scrapy.Request(response.url, callback=self.parse_statistics, dont_filter=True)
-			request.meta['yahoo_finance'] = response.meta['yahoo_finance']
+			# make a request to parse profile information.
+			request = scrapy.Request(response.url, callback=self.parse_profile)
+			request.meta['item'] = response.meta['item']
 			yield request
 			return
 	
@@ -167,17 +176,13 @@ class YahooSpider(scrapy.Spider):
 		url = self.statistics_url[0] + yahoo_finance['Street_Ticker'] + self.statistics_url[1]
 		request = scrapy.Request(url, callback=self.parse_detail_statistics)
 		request.meta['yahoo_finance'] = yahoo_finance
-		
+		request.meta['item'] = response.meta['item']
 		yield request
 			
 	# parse statistics data and save all data into csv file
 	def parse_detail_statistics(self, response):
 		# site error handling
 		if response.status in [553, 400, 404, 500]:
-		
-			request = scrapy.Request(response.url, callback=self.parse_detail_statistics, dont_filter=True)
-			request.meta['yahoo_finance'] = response.meta['yahoo_finance']
-			yield request
 			return
 	
 		yahoo_finance = response.meta['yahoo_finance']
@@ -225,21 +230,36 @@ class YahooSpider(scrapy.Spider):
 		suffix = []
 		for key in statistics_keys:
 			if key == 'start_date':
-				temp = self.remove_char(data['statistics']['earningsDate'][0], 'fmt')
+				if len(data['statistics']['earningsDate']) > 0:
+					temp = self.remove_char(data['statistics']['earningsDate'][0], 'fmt')
+				else:
+					temp = "N/A"
 			elif key == 'end_date':
-				temp = self.remove_char(data['statistics']['earningsDate'][1], 'fmt')
+				try:
+					temp = self.remove_char(data['statistics']['earningsDate'][1], 'fmt')
+				except:
+					if len(data['statistics']['earningsDate']) > 0:
+						temp = self.remove_char(data['statistics']['earningsDate'][0], 'fmt')
+					else:
+						temp = "N/A"
 			elif key == "lastSplitFactor":
 				temp = self.remove_char(data['statistics'], key)
+				
 			else:
-				temp = self.remove_char(data['statistics'][key], 'fmt')
+				try:
+					temp = self.remove_char(data['statistics'][key], 'fmt')
+				except:
+					temp = "N/A"
 				
 				
+			if key == "Company" and temp == "N/A":
+				return	
 			suffix.append(temp)
 			
 		suffix = ','.join(suffix)
 		
 		for offer in data['offers']:
-			offer = [self.remove_char(str(item)) for item in offer]
+			offer = [self.remove_char(item) for item in offer]
 			line = "%s,%s,%s\n" % (prefix, ','.join(offer), suffix)
 			
 			self.out_fp.write(line.encode("utf8"))
@@ -266,14 +286,22 @@ class YahooSpider(scrapy.Spider):
 			return "N/A"
 			
 	def remove_char(self, dict, key=""):
-		if key == "":
-			value = dict
-		elif key in dict:
-			value = str(dict[key])
+
+		try:
+			if key == "":
+				try:
+					value = str(dict)
+				except:
+					value = dict
+			elif key in dict:
+				value = str(dict[key])
 			
-		else:
+			else:
+				value = "N/A"
+		except:
 			value = "N/A"
 		
 		value = value.replace(",", " ")
 		value = value.replace("\"", " ")
+		
 		return "\"" + value + "\""

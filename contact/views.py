@@ -101,11 +101,6 @@ def uclassify(request):
 
         pdf_texts = dict()
         for file in request.FILES.getlist('files'):
-            temp = file.name
-            temp = temp.split(".")
-            if len(temp) == 1 or (len(temp) > 1 and temp[-1].lower() != 'pdf'):
-                continue
-
             path = "%s/%s" % (os.path.join(settings.BASE_DIR, 'contact/static/pdf_data'), file.name)
             destination = open(path, 'wb')
             for chunk in file.chunks():
@@ -116,7 +111,7 @@ def uclassify(request):
 
             post_data = json.dumps({'texts': [text]})
             header = {"Content-Type": "application/json", "Authorization": "Token %s" % settings.uclassify_read}
-            response = requests.post('https://api.uclassify.com/v1/uClassify/Topics/classify', data=post_data, headers=header)
+            response = requests.post('https://api.uclassify.com/v1/uClassify/Topics/classify', data=post_data, headers=header, verify=False)
 
             pdf_texts[file.name] = json.loads(response.content)[0]["classification"]
 
@@ -310,7 +305,8 @@ def uploadyahoo(request):
             for chunk in uploaded_file.chunks():
                 in_fp.write(chunk)
 
-    yahoo_finance(input_filepath, out_filepath)
+    os.system("python contact/Yahoo_Finance.py %s %s" % (input_filepath, out_filepath))
+    # yahoo_finance(input_filepath, out_filepath)
 
     res = {"filename": filename}
 

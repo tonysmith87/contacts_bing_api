@@ -81,7 +81,7 @@
             $(".fileupload").fileupload({
                 url: '{% url "upload-yahoo" %}',
                 dataType: 'json',
-
+		retryTimeout: 1000 * 60 * 60 * 5, 
                 add: function (e, data) {
                     $( "#progressbar" ).progressbar({
                         value: 0
