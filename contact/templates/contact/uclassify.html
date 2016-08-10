@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Contacts{% endblock %}
+{% block extra_css %}
+    <link href="{% static 'vendors/bower_components/bootstrap-select/dist/css/bootstrap-select.css' %}" rel="stylesheet">
+    <link href="{% static 'css/jquery-ui.css' %}" rel="stylesheet">
+
+    <style>
+
+            *{
+                margin: 0;
+                padding: 0;
+            }
+            a{
+                text-decoration: none;
+                color: #333;
+            }
+            body {
+                text-align:center;
+                background-color:#61b3de;
+                font-family:Arial, Helvetica, sans-serif;
+                font-size:80%;
+                color:#666;
+            }
+            .wrap {
+                background: #f3f8fb;
+                width:730px;
+                margin:30px auto;
+                border: 4px dashed #61b3de;
+                border-radius:4px;
+                padding: 20px 5px;
+            }
+            h1 {
+                font-family:Georgia, "Times New Roman", Times, serif;
+                font-size:170%;
+                color:#645348;
+                font-style:italic;
+                text-decoration:none;
+                font-weight:100;
+                padding: 10px;
+            }
+            .button, #files {
+                border-radius: 10px;
+                background-color: #61b3de;
+                border: 0;
+                color: #fff;
+                font-weight: bold;
+                font-style: italic;
+                padding: 6px 15px 5px;
+                cursor: pointer;
+            }
+            input[type="file"]{
+                color: transparent;
+            }
+            input[type="submit"]:Hover,:focus{
+                background-position:100px;
+            }
+            .msg{
+                background: #ddeff8;
+                padding: 5px;
+                margin-bottom: 15px;
+                border: #61b3de dotted 1px;
+            }
+            .copy{
+                margin-top: 20px;
+                clear: both;
+            }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container" style="margin-top: 30px;">
+        <div class="card" >
+            <div class="card-header">
+                <h2>
+                    <small>Select a directory by clicking 'Choose Files' and click 'Classify' button to get the result</small>
+                </h2>
+            </div>
+
+            <div class="card-body card-padding">
+                <form method="post" enctype="multipart/form-data">
+                    <input type="file" name="files" id="files" multiple="" directory="" webkitdirectory="" mozdirectory="" style="display: inline;">
+                    <input class="button" type="submit" value="Classify" />
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block footer %}
+    Copyright &copy; 2016 Footer
+{% endblock %}
+        <!-- Javascript Libraries -->
+{% block extra_assests %}
+    <script src="{% static 'vendors/bower_components/bootstrap-select/dist/js/bootstrap-select.js' %}"></script>
+    <script src="{% static 'js/jquery-ui.js' %}"></script>
+
+    <script src="{% static 'js/jquery.ui.widget.js' %}"></script>
+    <script src="{% static 'js/jquery.fileupload.js' %}"></script>
+
+    <script>
+        $(document).ready(function(){
+            $(".left-menu").each(function(){
+                $(this).removeClass("active")
+            })
+            $(".uclassify").addClass("active")
+        })
+
+
+    </script>
+{% endblock %}

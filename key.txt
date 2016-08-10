@@ -1,0 +1,7 @@
+uClassify
+username: king
+password: ts198722
+key: read: XyHgFlcltRqB
+     write: DDry3ThVuQ1O
+twinword:
+king1

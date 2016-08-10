@@ -1,3 +1,7 @@
+* For uClassify part
+In uclassify tab, you can select 'choose files' button for choosing a directory.
+After that, click classify button and then the program download csv file.
+
 1. Setup environement to run
 
 -  Change Bing API key word at line 16 in Contacts/Contacts/settings.py

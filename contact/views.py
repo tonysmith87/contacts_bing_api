@@ -17,8 +17,12 @@ import datetime
 from django.http import HttpResponse
 
 from django.views.decorators.csrf import csrf_exempt
+from contact.Yahoo_Finance import *
 
-import os
+import requests
+
+import pyPdf
+import shutil
 
 # Login Required decorator
 def login_required():
@@ -87,6 +91,74 @@ def bulk_search(request):
 def yahoo_search(request):
     return render_to_response('contact/yahoo_finance.html', locals(), context_instance=RequestContext(request))
 
+@login_required()
+@csrf_exempt
+def uclassify(request):
+
+    if 'files' in request.FILES:
+        if not os.path.exists(os.path.join(settings.BASE_DIR, 'contact/static/pdf_data')):
+            os.makedirs(os.path.join(settings.BASE_DIR, 'contact/static/pdf_data'))
+
+        pdf_texts = dict()
+        for file in request.FILES.getlist('files'):
+            path = "%s/%s" % (os.path.join(settings.BASE_DIR, 'contact/static/pdf_data'), file.name)
+            destination = open(path, 'wb')
+            for chunk in file.chunks():
+                destination.write(chunk)
+            destination.close()
+
+            text = getPDFContent(path)
+
+            post_data = json.dumps({'texts': [text]})
+            header = {"Content-Type": "application/json", "Authorization": "Token %s" % settings.uclassify_read}
+            response = requests.post('https://api.uclassify.com/v1/uClassify/Topics/classify', data=post_data, headers=header)
+
+            pdf_texts[file.name] = json.loads(response.content)[0]["classification"]
+
+        # download csv file
+
+        # Open StringIO to grab in-memory ZIP contents
+        s = StringIO.StringIO()
+        s.write("Content ID,FileName,Arts,Home,Recreation,Sports,Health,Business,Games,Society,Computers,Science\n")
+
+        for file_name in pdf_texts:
+            content_id = ""
+            try:
+                content_id = int(file_name.split("-")[0])
+            except:
+                content_id = ""
+
+            item = dict()
+            for classification in pdf_texts[file_name]:
+                item[classification['className']] = classification['p']
+
+            s.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n" % \
+                    (content_id, file_name, item['Arts'], item['Home'], item['Recreation'], item['Sports'], item['Health'], item['Business'], \
+                        item['Games'], item['Society'], item['Computers'], item['Science']))
+
+        # Grab ZIP file from in-memory, make response with correct MIME-type
+        resp = HttpResponse(s.getvalue(), content_type="text/csv")
+        temp = "uClassify_%s.csv" % datetime.datetime.now().strftime('%m%d%y')
+        resp['Content-Disposition'] = "attachment; filename=" + temp
+
+        #if os.path.exists(os.path.join(settings.BASE_DIR, 'contact/static/pdf_data/')):
+        #    shutil.rmtree(os.path.join(settings.BASE_DIR, 'contact/static/pdf_data/'))
+
+        return resp
+
+    return render_to_response('contact/uclassify.html', locals(), context_instance=RequestContext(request))
+
+def getPDFContent(path):
+    content = ""
+    # Load PDF into pyPDF
+    pdf = pyPdf.PdfFileReader(file(path, "rb"))
+    # Iterate pages
+    for i in range(0, pdf.getNumPages()):
+        # Extract text from page and add to content
+        content += pdf.getPage(i).extractText() + "\n"
+    # Collapse whitespace
+    content = " ".join(content.replace(u"\xa0", " ").strip().split())
+    return content
 
 @login_required()
 def get_data(request):
@@ -233,12 +305,12 @@ def uploadyahoo(request):
             for chunk in uploaded_file.chunks():
                 in_fp.write(chunk)
 
-    os.system("python contact/Yahoo_Finance.py %s %s" % (input_filepath, out_filepath))
-    # yahoo_finance(input_filepath, out_filepath)
+    yahoo_finance(input_filepath, out_filepath)
 
     res = {"filename": filename}
 
     return HttpResponse(json.dumps(res))
+
 
 def random_word(length):
    return ''.join(random.choice(string.lowercase + string.uppercase + string.digits) for i in range(length))
