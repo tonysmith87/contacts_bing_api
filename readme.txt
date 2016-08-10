@@ -1,6 +1,7 @@
 * For uClassify part
 In uclassify tab, you can select 'choose files' button for choosing a directory.
 After that, click classify button and then the program download csv file.
+You can choose 'sample_data' directory for testing.
 
 1. Setup environement to run
 

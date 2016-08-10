@@ -101,6 +101,11 @@ def uclassify(request):
 
         pdf_texts = dict()
         for file in request.FILES.getlist('files'):
+            temp = file.name
+            temp = temp.split(".")
+            if len(temp) == 1 or (len(temp) > 1 and temp[-1].lower() != 'pdf'):
+                continue
+
             path = "%s/%s" % (os.path.join(settings.BASE_DIR, 'contact/static/pdf_data'), file.name)
             destination = open(path, 'wb')
             for chunk in file.chunks():
