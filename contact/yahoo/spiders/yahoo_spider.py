@@ -220,9 +220,10 @@ class YahooSpider(scrapy.Spider):
 			
 			if key == "Company" and tp_data == "N/A":
 				return	
-			else:
-				tp_data = tp_data.split("(")[0]
-			prefix.append(self.remove_char(data, key))
+			elif key == "Company":
+				tp_data = tp_data.split("(")[0].strip()
+
+			prefix.append(tp_data)
 				
 		prefix = ','.join(prefix)
 			
