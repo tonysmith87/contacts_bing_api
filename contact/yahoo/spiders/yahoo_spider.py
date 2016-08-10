@@ -155,6 +155,9 @@ class YahooSpider(scrapy.Spider):
 		statistics = OrderedDict()
 			
 		yahoo_finance['Company'] = self.validate(response.xpath("//div[@id='quote-header-info']//h6/text()"))
+		if yahoo_finance['Company'] == "N/A":
+			yahoo_finance['Company'] = self.validate(response.xpath("//div[@id='quote-header-info']//h1/text()"))
+
 		yahoo_finance['en_date'] = self.validate(response.xpath("//div[@id='quote-header-info']//p[1]//span[4]//span[2]/text()")).split(",")[0]
 		
 		try:
@@ -212,8 +215,15 @@ class YahooSpider(scrapy.Spider):
 	# save data in csv file
 	def save_data_csv(self, data):
 		prefix = []
-		for key in self.header[:16]:
+		for key in self.header[:16]:			
+			tp_data = self.remove_char(data, key)
+			
+			if key == "Company" and tp_data == "N/A":
+				return	
+			else:
+				tp_data = tp_data.split("(")[0]
 			prefix.append(self.remove_char(data, key))
+				
 		prefix = ','.join(prefix)
 			
 		statistics_keys = ['marketCap', 'enterpriseValue', 'start_date', 'trailingEps', 'forwardPE', 'end_date', 'pegRatio',\
@@ -250,10 +260,7 @@ class YahooSpider(scrapy.Spider):
 					temp = self.remove_char(data['statistics'][key], 'fmt')
 				except:
 					temp = "N/A"
-				
-				
-			if key == "Company" and temp == "N/A":
-				return	
+
 			suffix.append(temp)
 			
 		suffix = ','.join(suffix)
